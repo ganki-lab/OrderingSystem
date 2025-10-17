@@ -188,35 +188,50 @@ export class DatabaseService {
 
   // 注文履歴操作（論理削除されていないもののみ取得）
   async getOrderHistory(): Promise<OrderHistory[]> {
+    console.log('🔍 [Database] 注文履歴クエリ開始 (deleted_at IS NULL)');
     const { data, error } = await this.supabase
       .from('order_history')
       .select('*')
       .is('deleted_at', null)
       .order('completed_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ [Database] 注文履歴クエリエラー:', error);
+      throw error;
+    }
+    console.log('✅ [Database] 注文履歴クエリ成功:', data?.length || 0, '件');
     return data || [];
   }
 
   async createOrderHistory(history: Omit<OrderHistory, 'id' | 'completed_at' | 'deleted_at'>): Promise<OrderHistory> {
+    console.log('💾 [Database] 注文履歴作成開始:', JSON.stringify(history));
     const { data, error } = await this.supabase
       .from('order_history')
       .insert(history)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ [Database] 注文履歴作成エラー:', error);
+      throw error;
+    }
+    console.log('✅ [Database] 注文履歴作成成功:', data?.id);
     return data;
   }
 
   // 注文履歴の論理削除
   async softDeleteOrderHistory(id: string): Promise<void> {
+    console.log('🗑️ [Database] 注文履歴論理削除開始:', id);
     const { error } = await this.supabase
       .from('order_history')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ [Database] 注文履歴論理削除エラー:', error);
+      throw error;
+    }
+    console.log('✅ [Database] 注文履歴論理削除成功:', id);
   }
 
   // 初期データの投入（必要な場合のみ）

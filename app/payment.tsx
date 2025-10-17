@@ -93,12 +93,19 @@ export default function PaymentScreen() {
               
               if (database && isConnected) {
                 console.log('💾 データベースに注文履歴を保存中...');
-                await database.createOrderHistory({
-                  table_number: currentTableNumber,
-                  items: orderHistoryItem.items,
-                  total_amount: getTotalAmount(),
-                });
-                console.log('✅ Supabase注文履歴保存完了');
+                try {
+                  const historyData = {
+                    table_number: currentTableNumber,
+                    items: orderHistoryItem.items,
+                    total_amount: getTotalAmount(),
+                  };
+                  console.log('📋 保存データ:', JSON.stringify(historyData));
+                  const result = await database.createOrderHistory(historyData);
+                  console.log('✅ Supabase注文履歴保存完了:', result);
+                } catch (dbError) {
+                  console.error('❌ 注文履歴保存エラー:', dbError);
+                  throw dbError;
+                }
                 
                 console.log('🔄 データベースでテーブルを空席に戻し中...');
                 await database.updateTable(currentTableId, {

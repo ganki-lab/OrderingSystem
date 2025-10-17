@@ -40,11 +40,21 @@ export default function OrderHistoryScreen() {
 
   // データベースから注文履歴を読み込み
   const loadOrderHistory = async () => {
-    if (!database) return;
-    
+    if (!database) {
+      console.log('⚠️ データベース未接続 - 注文履歴読み込みスキップ');
+      return;
+    }
+
     try {
       setIsRefreshing(true);
+      console.log('🔍 データベースから注文履歴を読み込み中...');
       const dbHistory = await database.getOrderHistory();
+      console.log('📊 取得した注文履歴:', dbHistory.length, '件');
+
+      if (dbHistory.length > 0) {
+        console.log('📋 最初の注文サンプル:', JSON.stringify(dbHistory[0]));
+      }
+
       const formattedHistory: OrderHistoryItem[] = dbHistory.map(item => ({
        id: item.id.toString(),
         tableNumber: item.table_number,
@@ -52,9 +62,14 @@ export default function OrderHistoryScreen() {
         total: item.total_amount,
         timestamp: new Date(item.completed_at || ''),
       }));
+      console.log('✅ フォーマット済み注文履歴:', formattedHistory.length, '件');
       setOrderHistory(formattedHistory);
     } catch (error) {
-      console.error('注文履歴読み込みエラー:', error);
+      console.error('❌ 注文履歴読み込みエラー:', error);
+      if (error instanceof Error) {
+        console.error('エラー詳細:', error.message);
+        console.error('スタックトレース:', error.stack);
+      }
       Alert.alert('エラー', '注文履歴の読み込みに失敗しました');
     } finally {
       setIsRefreshing(false);
